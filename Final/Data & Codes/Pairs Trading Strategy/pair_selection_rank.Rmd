@@ -1,0 +1,61 @@
+---
+title: "G5010_proj1"
+author: "Yili Tang"
+date: "2018/4/1"
+output:
+  html_document: default
+  pdf_document: default
+  word_document: default
+---
+
+```{r}
+options(warn = -1)
+setwd("~/Documents/MATH_5010/project")
+library(tseries)
+ltc <- read.csv("LTC.csv")
+eth <- read.csv("ETH.csv")
+btc <- read.csv("BTC.csv")
+xrp <- read.csv("XRP.csv")
+
+
+file <- cbind(ltc$close, eth$close, btc$close, xrp$close)
+colnames(file) <- c("ltc", "eth", " btc", "xrp")
+combination <- t(combn(1:4, 2))
+names <- colnames(file)
+
+pvalue <- rep(0, nrow(combination))
+
+
+for(i in 1:nrow(combination)){
+  a <- combination[i, 1]
+  b <- combination[i, 2]
+  ratio1 <- file[, a] / file[, b]
+  ratio2 <- file[, b] / file[, a]
+  data.ts1 <- as.ts(ratio1)
+  data.ts2 <- as.ts(ratio2)
+  test.result1 <- adf.test(data.ts1)
+  test.result2 <- adf.test(data.ts2)
+  pvalue1 <- test.result1$p.value
+  pvalue2 <- test.result2$p.value
+  pvalue[i] <- max(pvalue1, pvalue2)
+  
+}
+
+pos.p <- pvalue[which(pvalue > 0.05)]
+pos.comb <- combination[which(pvalue > 0.05), ]
+pos.pairs <- matrix(0, nrow = nrow(pos.comb), ncol = 3)
+
+for(i in 1:nrow(pos.comb)){
+  pos.pairs[i, 1] <- names[pos.comb[i, 1]]
+  pos.pairs[i, 2] <- names[pos.comb[i, 2]]
+  pos.pairs[i, 3] <- round(pos.p[i], 3)
+}
+
+final.result <- as.data.frame(pos.pairs)
+colnames(final.result) <- c("choice1", "choice2", "P.value")
+
+final.result <- final.result[order(final.result$P.value, decreasing = T), ]
+rownames(final.result) <- c(1:6)
+final.result
+```
+
